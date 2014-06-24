@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pre-dex-items>
+
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/sjsxp-2e067e31b930d99159fb57dd56af4f8503934d60.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/sjsxp.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="548e4fc4e6a65d9d5e5b2e10b2b05babf59bad8d"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/org-apache-poi-xslf-mofel-geom-PresetGeometries-95d4e220f71a530dc4debcc546e991a43e2f76a8.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/org-apache-poi-xslf-mofel-geom-PresetGeometries.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="3439feae4ae19cf782b70bbdb209011daabac343"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/commons-codec-1.5-488ce0278f379a55ba15e07a179536be89857867.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/commons-codec-1.5.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="cf993e250ff71804754ec2734a16f23c0be99f70"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/dom4j-1.6.1-c87a9e42e2d1f6529a98559c389e714af416757b.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/dom4j-1.6.1.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="5d3ccc056b6f056dbf0dddfdf43894b9065a8f94"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/commons-logging-1.1-970236c9870dbff0c1afdc05425846c810589faa.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/commons-logging-1.1.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="ba24d5de831911b684c92cd289ed5ff826271824"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/xmlbeans-2.3.0-a504b7252284652a83b8804d56da2a3f7c131ee7.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/xmlbeans-2.3.0.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="8704dcf5c9f10265a08f5020b0fab70eb64ac3c4"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/schemaorg_apache_xmlbeans_new-84e715ccd47fc9230ea2d04a25b8b9f03f859b27.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/schemaorg_apache_xmlbeans_new.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="e1b58abb4696f731b1072b9fc696f75a21015032"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/android-support-v4-ba32151fd6745106d16eff120c770826a70ad4d1.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/android-support-v4.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="cb6883d96005bc85b3e868f204507ea5b4fa9bbf"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/jsr173_1.0_api-761a8ce5fd3eea352da1fef838ceda32bac63a01.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/jsr173_1.0_api.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="69b298cb1b6ce3a5852e96b7ef5cd3a28cc20c38"/>
+    <item
+        dex="/Users/temp/AndroidStudioProjects/OfficeReader/app/build/intermediates/pre-dexed/debug/log4j-1.2.13-596b06be1fb236b843a9e07163dc0498ae420ef6.jar"
+        jar="/Users/temp/AndroidStudioProjects/OfficeReader/app/libs/log4j-1.2.13.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="8b1b85d04eea979c33109ea42808b7d3f6d355ab"/>
+
+</pre-dex-items>

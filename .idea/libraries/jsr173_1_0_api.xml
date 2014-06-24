@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jsr173_1.0_api">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/libs/jsr173_1.0_api.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

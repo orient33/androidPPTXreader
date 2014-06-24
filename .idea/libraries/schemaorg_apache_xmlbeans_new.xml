@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="schemaorg_apache_xmlbeans_new">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/libs/schemaorg_apache_xmlbeans_new.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
