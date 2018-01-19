@@ -1,9 +1,11 @@
 package com.singuloid.officereader;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -15,10 +17,15 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -44,6 +51,7 @@ import org.apache.poi.xslf.usermodel.XSLFSlide;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,14 +71,14 @@ public class OpenActivity extends Activity {
     private ScaleGestureDetector mScaleGestureDetector;
 
     private boolean mOnScale = false;
-    private boolean mOnPagerScoll = false;
+    private boolean mOnPagerScroll = false;
 
     private int slideCount = 0;
     private XSLFSlide[] slide;
-    private XMLSlideShow ppt;
     private Dimension pgsize;
 
     private ProgressDialog mProgressDialog;
+    private String path;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -115,7 +123,6 @@ public class OpenActivity extends Activity {
         mProgressDialog.setMessage("Loading");
         mProgressDialog.setIndeterminate(true);
 
-        String path = null;
         Intent i = getIntent();
         if (i != null) {
             Uri uri = i.getData();
@@ -135,9 +142,32 @@ public class OpenActivity extends Activity {
                 }
             }
         }
+        if (new File(path).canRead()) {
+            loadFile(path);
+        } else {
+            if (Build.VERSION_CODES.M <= Build.VERSION.SDK_INT) {
+                final String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+                int check = ContextCompat.checkSelfPermission(this, permission);
+                if (check != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, new String[]{permission}, 1);
+                }
+            } else {
+                Toast.makeText(this, "file can not read!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            loadFile(path);
+        } else {
+            finish();
+        }
+    }
+
+    private void loadFile(String path) {
         try {
-            setTitle(path);
             pptx2png(path);
         } catch (IOException e) {
             e.printStackTrace();
@@ -146,82 +176,111 @@ public class OpenActivity extends Activity {
         }
     }
 
+    @Nullable
+    private LoadTask task;
+
+    private static class LoadTask extends AsyncTask<String, Void, XMLSlideShow> {
+        private final WeakReference<OpenActivity> ref;
+
+        LoadTask(OpenActivity activity) {
+            ref = new WeakReference<OpenActivity>(activity);
+        }
+
+        protected void onPostExecute(XMLSlideShow result) {
+            OpenActivity activity = ref.get();
+            if (isCancelled() || activity == null || activity.isFinishing()) {
+                return;
+            }
+            activity.onLoadComplete(result);
+        }
+
+        @Override
+        protected XMLSlideShow doInBackground(String... paths) {
+            String path = paths[0];
+            Log.d(TAG, "Processing " + path);
+            long time = System.currentTimeMillis();
+            XMLSlideShow ppt = null;
+            try {
+                ppt = new XMLSlideShow(OPCPackage.open(path,
+                        PackageAccess.READ));
+            } catch (InvalidFormatException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG, "time: " + (System.currentTimeMillis() - time));
+            return ppt;
+        }
+    }
+
+    private static class H extends Handler {
+        private final WeakReference<OpenActivity> ref;
+
+        H(OpenActivity activity) {
+            ref = new WeakReference<OpenActivity>(activity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            OpenActivity activity = ref.get();
+            ViewPager mViewPager = activity == null ? null : activity.mViewPager;
+            if (activity == null || mViewPager == null) {
+                return;
+            }
+            switch (msg.what) {
+                case 0: {
+                    Log.d(TAG, "draw finish");
+                    View v = (View) msg.obj;
+                    v.invalidate();
+                    int position = msg.arg1;
+                    if (position == mViewPager.getCurrentItem()) {
+                        activity.setProgress(10000);
+                    }
+                }
+                break;
+                case 1: {
+                    int progress = msg.arg1;
+                    int max = msg.arg2;
+                    int p = (int) ((float) progress / max * 10000);
+                    int position = (Integer) msg.obj;
+                    Log.d(TAG, "update progress: " + progress + ", max: " + max
+                            + ", p: " + p + ", position: " + position);
+                    if (position == 1) {
+                        activity.setProgressBarIndeterminate(false);
+                    }
+                    if (position == mViewPager.getCurrentItem()) {
+                        if (position != 0 && progress == 0) {
+                            activity.setProgressBarIndeterminate(false);
+                        }
+                        activity.setProgress(p);
+                    }
+                }
+                break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void onLoadComplete(XMLSlideShow ppt) {
+
+        pgsize = ppt.getPageSize();
+        Log.d(TAG, "pgsize.width: " + pgsize.getWidth() + ", pgsize.height: " + pgsize.getHeight());
+        slide = ppt.getSlides();
+        slideCount = slide.length;
+        mProgressDialog.dismiss();
+        mViewPager.setAdapter(mPagerAdapter);
+    }
+
     private void pptx2png(final String path) throws IOException,
             InvalidFormatException {
 
         mProgressDialog.show();
 
-        new AsyncTask<Void, Void, Void>() {
-            protected void onPostExecute(Void result) {
-                mProgressDialog.dismiss();
-
-                mViewPager.setAdapter(mPagerAdapter);
-            }
-
-            @Override
-            protected Void doInBackground(Void... params) {
-                System.out.println("Processing " + path);
-                long time = System.currentTimeMillis();
-                try {
-                    ppt = new XMLSlideShow(OPCPackage.open(path,
-                            PackageAccess.READ));
-                    pgsize = ppt.getPageSize();
-                    System.out.println("pgsize.width: " + pgsize.getWidth()
-                            + ", pgsize.height: " + pgsize.getHeight());
-                    slide = ppt.getSlides();
-                    slideCount = slide.length;
-                } catch (InvalidFormatException e) {
-                    e.printStackTrace();
-                }
-
-                Log.d(TAG, "time: " + (System.currentTimeMillis() - time));
-                return null;
-            }
-        }.execute();
+        task = new LoadTask(this);
+        task.execute(path);
 
         final ExecutorService es = Executors.newSingleThreadExecutor();
 
-        final Handler handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                if (mViewPager == null) {
-                    return;
-                }
-                switch (msg.what) {
-                    case 0: {
-                        Log.d(TAG, "draw finish");
-                        View v = (View) msg.obj;
-                        v.invalidate();
-                        int position = msg.arg1;
-                        if (position == mViewPager.getCurrentItem()) {
-                            setProgress(10000);
-                        }
-                    }
-                    break;
-                    case 1: {
-                        int progress = msg.arg1;
-                        int max = msg.arg2;
-                        int p = (int) ((float) progress / max * 10000);
-                        int position = (Integer) msg.obj;
-                        Log.d(TAG, "update progress: " + progress + ", max: " + max
-                                + ", p: " + p + ", position: " + position);
-                        if (position == 1) {
-                            setProgressBarIndeterminate(false);
-                        }
-                        if (position == mViewPager.getCurrentItem()) {
-                            if (position != 0 && progress == 0) {
-                                setProgressBarIndeterminate(false);
-                            }
-                            setProgress(p);
-                        }
-                    }
-                    break;
-                    default:
-                        break;
-                }
-            }
-        };
+        final H handler = new H(this);
 
         mPagerAdapter = new PagerAdapter() {
 
@@ -272,18 +331,15 @@ public class OpenActivity extends Activity {
                 final Graphics2D graphics2d = new Graphics2D(canvas);
 
                 final AtomicBoolean isCanceled = new AtomicBoolean(false);
-                Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        // render
-                        try {
-                            slide[position].draw(graphics2d, isCanceled,
-                                    handler, position);
-                            handler.sendMessage(Message.obtain(handler, 0,
-                                    position, 0, imageView));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                Runnable runnable = () -> {
+                    // render
+                    try {
+                        slide[position].draw(graphics2d, isCanceled,
+                                handler, position);
+                        handler.sendMessage(Message.obtain(handler, 0,
+                                position, 0, imageView));
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 };
 
@@ -341,6 +397,7 @@ public class OpenActivity extends Activity {
     Toast mPreToast;
 
     ViewPager.OnPageChangeListener mPageChangeListener = new ViewPager.OnPageChangeListener() {
+        @SuppressLint({"ShowToast", "DefaultLocale"})
         @Override
         public void onPageSelected(int position, int prePosition) {
             ImageViewTouch preImageView = (ImageViewTouch) getView(prePosition);
@@ -366,17 +423,17 @@ public class OpenActivity extends Activity {
         @Override
         public void onPageScrolled(int position, float positionOffset,
                                    int positionOffsetPixels) {
-            mOnPagerScoll = true;
+            mOnPagerScroll = true;
         }
 
         @Override
         public void onPageScrollStateChanged(int state) {
             if (state == ViewPager.SCROLL_STATE_DRAGGING) {
-                mOnPagerScoll = true;
+                mOnPagerScroll = true;
             } else if (state == ViewPager.SCROLL_STATE_SETTLING) {
-                mOnPagerScoll = false;
+                mOnPagerScroll = false;
             } else {
-                mOnPagerScoll = false;
+                mOnPagerScroll = false;
             }
         }
 
@@ -471,12 +528,7 @@ public class OpenActivity extends Activity {
             imageView.center(true, true);
 
             // NOTE: 延迟修正缩放后可能移动问题
-            imageView.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mOnScale = false;
-                }
-            }, 300);
+            imageView.postDelayed(() -> mOnScale = false, 300);
             // Logger.d(TAG, "gesture onScaleEnd");
         }
 
@@ -515,7 +567,7 @@ public class OpenActivity extends Activity {
             public boolean onTouch(View v, MotionEvent event) {
                 // NOTE: gestureDetector may handle onScroll..
                 if (!mOnScale) {
-                    if (!mOnPagerScoll) {
+                    if (!mOnPagerScroll) {
                         try {
                             mGestureDetector.onTouchEvent(event);
                         } catch (Exception e) {
@@ -523,7 +575,7 @@ public class OpenActivity extends Activity {
                         }
                     }
                 }
-                if (!mOnPagerScoll) {
+                if (!mOnPagerScroll) {
                     mScaleGestureDetector.onTouchEvent(event);
                 }
 
@@ -566,13 +618,13 @@ public class OpenActivity extends Activity {
         if (mProgressDialog != null && mProgressDialog.isShowing()) {
             mProgressDialog.dismiss();
         }
+        if (task != null) task.cancel(false);
         ImageViewTouch imageView = getCurrentImageView();
         if (imageView != null) {
             imageView.mBitmapDisplayed.recycle();
             imageView.clear();
         }
 
-        ppt = null;
         slide = null;
         mPagerAdapter = null;
         mViewPager = null;

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="AndroidDexCompilerConfiguration">
-    <option name="VM_OPTIONS" value="--core-library" />
-    <option name="MAX_HEAP_SIZE" value="800" />
-    <option name="CORE_LIBRARY" value="true" />
-  </component>
-</project>
-
